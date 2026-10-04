@@ -1,0 +1,105 @@
+{
+ "actions": [],
+ "autoname": "field:gateway_name",
+ "creation": "2026-10-04 16:30:00.000000",
+ "description": "One Square merchant account (sandbox or production) as a Frappe Payment Gateway \"Square-<gateway name>\". Secrets are written here by the deploy pipeline from OpenBao, never by hand.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "gateway_name",
+  "environment",
+  "column_break_env",
+  "application_id",
+  "location_id",
+  "credentials_section",
+  "access_token",
+  "webhook_section",
+  "webhook_url",
+  "webhook_signature_key"
+ ],
+ "fields": [
+  {
+   "fieldname": "gateway_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Gateway Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "default": "Sandbox",
+   "fieldname": "environment",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Environment",
+   "options": "Sandbox\nProduction",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_env",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Square application ID (public; used by the browser Web Payments SDK).",
+   "fieldname": "application_id",
+   "fieldtype": "Data",
+   "label": "Application ID",
+   "reqd": 1
+  },
+  {
+   "description": "The Square location payments are taken at.",
+   "fieldname": "location_id",
+   "fieldtype": "Data",
+   "label": "Location ID",
+   "reqd": 1
+  },
+  {
+   "fieldname": "credentials_section",
+   "fieldtype": "Section Break",
+   "label": "Credentials"
+  },
+  {
+   "fieldname": "access_token",
+   "fieldtype": "Password",
+   "label": "Access Token",
+   "reqd": 1
+  },
+  {
+   "fieldname": "webhook_section",
+   "fieldtype": "Section Break",
+   "label": "Webhook"
+  },
+  {
+   "description": "The notification URL exactly as registered in the Square webhook subscription: https://<host>/api/method/payment_square.api.webhook?gateway=<gateway name>. Square signs this URL plus the body.",
+   "fieldname": "webhook_url",
+   "fieldtype": "Data",
+   "label": "Webhook URL"
+  },
+  {
+   "fieldname": "webhook_signature_key",
+   "fieldtype": "Password",
+   "label": "Webhook Signature Key"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-10-04 16:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Payment Square",
+ "name": "Square Settings",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
