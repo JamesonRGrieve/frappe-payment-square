@@ -32,3 +32,4 @@ def get_context(context):
 	context.application_id = settings.application_id
 	context.location_id = settings.location_id
 	context.sdk_url = square_client.WEB_SDK_URLS[settings.environment]
+	context.accept_gift_cards = bool(settings.accept_gift_cards)

@@ -1,0 +1,105 @@
+{
+ "description": "The card for the rest is declined: the gift card authorisation is cancelled.",
+ "exchanges": [
+  {
+   "method": "POST",
+   "path": "/v2/payments",
+   "request": {
+    "source_id": "gftc:part",
+    "idempotency_key": "<any>",
+    "amount_money": {
+     "amount": 3000,
+     "currency": "USD"
+    },
+    "location_id": "LTEST",
+    "reference_id": "<any>",
+    "autocomplete": false,
+    "note": "<any>",
+    "buyer_email_address": "buyer@example.com",
+    "accept_partial_authorization": true
+   },
+   "response": {
+    "payment": {
+     "id": "GP4",
+     "created_at": "2026-10-20T10:00:00Z",
+     "updated_at": "2026-10-20T10:00:00Z",
+     "amount_money": {
+      "amount": 1000,
+      "currency": "USD"
+     },
+     "approved_money": {
+      "amount": 1000,
+      "currency": "USD"
+     },
+     "status": "APPROVED",
+     "source_type": "CARD",
+     "card_details": {
+      "status": "AUTHORIZED",
+      "card": {
+       "card_brand": "SQUARE_GIFT_CARD",
+       "last_4": "0000"
+      }
+     },
+     "location_id": "LTEST"
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/v2/payments",
+   "request": {
+    "source_id": "cnon:declined",
+    "idempotency_key": "<any>",
+    "amount_money": {
+     "amount": 2000,
+     "currency": "USD"
+    },
+    "location_id": "LTEST",
+    "reference_id": "<any>",
+    "autocomplete": false,
+    "note": "<any>",
+    "buyer_email_address": "buyer@example.com"
+   },
+   "response": {
+    "errors": [
+     {
+      "category": "PAYMENT_METHOD_ERROR",
+      "code": "CARD_DECLINED",
+      "detail": "Card declined."
+     }
+    ]
+   },
+   "status": 400
+  },
+  {
+   "method": "POST",
+   "path": "/v2/payments/GP4/cancel",
+   "request": null,
+   "response": {
+    "payment": {
+     "id": "GP4",
+     "created_at": "2026-10-20T10:00:00Z",
+     "updated_at": "2026-10-20T10:00:00Z",
+     "amount_money": {
+      "amount": 1000,
+      "currency": "USD"
+     },
+     "approved_money": {
+      "amount": 1000,
+      "currency": "USD"
+     },
+     "status": "CANCELED",
+     "source_type": "CARD",
+     "card_details": {
+      "status": "VOIDED",
+      "card": {
+       "card_brand": "SQUARE_GIFT_CARD",
+       "last_4": "0000"
+      }
+     },
+     "location_id": "LTEST"
+    }
+   }
+  }
+ ]
+}

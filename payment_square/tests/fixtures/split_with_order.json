@@ -1,0 +1,115 @@
+{
+ "description": "The webshop order exists in Square (frappe-square-sync): both payments are taken against it and paid onto it together.",
+ "exchanges": [
+  {
+   "method": "POST",
+   "path": "/v2/payments",
+   "request": {
+    "source_id": "gftc:part",
+    "idempotency_key": "<any>",
+    "amount_money": {
+     "amount": 3000,
+     "currency": "USD"
+    },
+    "location_id": "LTEST",
+    "reference_id": "<any>",
+    "autocomplete": false,
+    "note": "<any>",
+    "buyer_email_address": "buyer@example.com",
+    "accept_partial_authorization": true,
+    "order_id": "SQ-ORD-1"
+   },
+   "response": {
+    "payment": {
+     "id": "GP5",
+     "created_at": "2026-10-20T10:00:00Z",
+     "updated_at": "2026-10-20T10:00:00Z",
+     "amount_money": {
+      "amount": 1000,
+      "currency": "USD"
+     },
+     "approved_money": {
+      "amount": 1000,
+      "currency": "USD"
+     },
+     "status": "APPROVED",
+     "source_type": "CARD",
+     "card_details": {
+      "status": "AUTHORIZED",
+      "card": {
+       "card_brand": "SQUARE_GIFT_CARD",
+       "last_4": "0000"
+      }
+     },
+     "location_id": "LTEST"
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/v2/payments",
+   "request": {
+    "source_id": "cnon:rest",
+    "idempotency_key": "<any>",
+    "amount_money": {
+     "amount": 2000,
+     "currency": "USD"
+    },
+    "location_id": "LTEST",
+    "reference_id": "<any>",
+    "autocomplete": false,
+    "note": "<any>",
+    "buyer_email_address": "buyer@example.com",
+    "order_id": "SQ-ORD-1"
+   },
+   "response": {
+    "payment": {
+     "id": "CP5",
+     "created_at": "2026-10-20T10:00:00Z",
+     "updated_at": "2026-10-20T10:00:00Z",
+     "amount_money": {
+      "amount": 2000,
+      "currency": "USD"
+     },
+     "approved_money": {
+      "amount": 2000,
+      "currency": "USD"
+     },
+     "status": "APPROVED",
+     "source_type": "CARD",
+     "card_details": {
+      "status": "AUTHORIZED",
+      "card": {
+       "card_brand": "VISA",
+       "last_4": "0000"
+      }
+     },
+     "location_id": "LTEST"
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/v2/orders/SQ-ORD-1/pay",
+   "request": {
+    "idempotency_key": "<any>",
+    "payment_ids": [
+     "GP5",
+     "CP5"
+    ]
+   },
+   "response": {
+    "order": {
+     "id": "SQ-ORD-1",
+     "location_id": "LTEST",
+     "state": "COMPLETED",
+     "version": 3,
+     "total_money": {
+      "amount": 3000,
+      "currency": "USD"
+     }
+    }
+   }
+  }
+ ]
+}

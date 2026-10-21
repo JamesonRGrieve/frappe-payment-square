@@ -1,0 +1,78 @@
+{
+ "description": "A gift card covers the whole request: authorised with partial authorisation allowed, then completed.",
+ "exchanges": [
+  {
+   "method": "POST",
+   "path": "/v2/payments",
+   "request": {
+    "source_id": "gftc:whole",
+    "idempotency_key": "<any>",
+    "amount_money": {
+     "amount": 3000,
+     "currency": "USD"
+    },
+    "location_id": "LTEST",
+    "reference_id": "<any>",
+    "autocomplete": false,
+    "note": "<any>",
+    "buyer_email_address": "buyer@example.com",
+    "accept_partial_authorization": true
+   },
+   "response": {
+    "payment": {
+     "id": "GP1",
+     "created_at": "2026-10-20T10:00:00Z",
+     "updated_at": "2026-10-20T10:00:00Z",
+     "amount_money": {
+      "amount": 3000,
+      "currency": "USD"
+     },
+     "approved_money": {
+      "amount": 3000,
+      "currency": "USD"
+     },
+     "status": "APPROVED",
+     "source_type": "CARD",
+     "card_details": {
+      "status": "AUTHORIZED",
+      "card": {
+       "card_brand": "SQUARE_GIFT_CARD",
+       "last_4": "0000"
+      }
+     },
+     "location_id": "LTEST"
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/v2/payments/GP1/complete",
+   "request": {},
+   "response": {
+    "payment": {
+     "id": "GP1",
+     "created_at": "2026-10-20T10:00:00Z",
+     "updated_at": "2026-10-20T10:00:00Z",
+     "amount_money": {
+      "amount": 3000,
+      "currency": "USD"
+     },
+     "approved_money": {
+      "amount": 3000,
+      "currency": "USD"
+     },
+     "status": "COMPLETED",
+     "source_type": "CARD",
+     "card_details": {
+      "status": "CAPTURED",
+      "card": {
+       "card_brand": "SQUARE_GIFT_CARD",
+       "last_4": "0000"
+      }
+     },
+     "location_id": "LTEST"
+    }
+   }
+  }
+ ]
+}

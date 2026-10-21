@@ -1,0 +1,59 @@
+{
+ "description": "Refunding a split payment: each part back to where it came from (the gift card part to the gift card).",
+ "exchanges": [
+  {
+   "method": "POST",
+   "path": "/v2/refunds",
+   "request": {
+    "idempotency_key": "<any>",
+    "payment_id": "GP2",
+    "amount_money": {
+     "amount": 1000,
+     "currency": "USD"
+    },
+    "reason": "Returned"
+   },
+   "response": {
+    "refund": {
+     "id": "RF-G",
+     "status": "PENDING",
+     "location_id": "LTEST",
+     "amount_money": {
+      "amount": 1000,
+      "currency": "USD"
+     },
+     "payment_id": "GP2",
+     "created_at": "2026-10-20T10:00:00Z",
+     "updated_at": "2026-10-20T10:00:00Z"
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/v2/refunds",
+   "request": {
+    "idempotency_key": "<any>",
+    "payment_id": "CP2",
+    "amount_money": {
+     "amount": 2000,
+     "currency": "USD"
+    },
+    "reason": "Returned"
+   },
+   "response": {
+    "refund": {
+     "id": "RF-C",
+     "status": "PENDING",
+     "location_id": "LTEST",
+     "amount_money": {
+      "amount": 2000,
+      "currency": "USD"
+     },
+     "payment_id": "CP2",
+     "created_at": "2026-10-20T10:00:00Z",
+     "updated_at": "2026-10-20T10:00:00Z"
+    }
+   }
+  }
+ ]
+}

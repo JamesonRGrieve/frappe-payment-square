@@ -9,8 +9,17 @@
 	{% if description %}<p>{{ description }}</p>{% endif %}
 	<p><strong>{{ _("Amount") }}:</strong> {{ amount }}</p>
 	<form id="square-payment-form" novalidate>
-		<label for="card-container" style="display:block;margin-bottom:.5rem">{{ _("Card details") }}</label>
-		<div id="card-container" role="group" aria-label="{{ _('Card details') }}"></div>
+		{% if accept_gift_cards %}
+		<fieldset style="border:0;padding:0;margin:0 0 1rem">
+			<legend style="font-size:1rem">{{ _("Gift card") }}</legend>
+			<p><label><input type="checkbox" id="use-gift-card" aria-controls="gift-card-container"> {{ _("Pay with a gift card") }}</label></p>
+			<div id="gift-card-container" role="group" aria-label="{{ _('Gift card number') }}" hidden></div>
+		</fieldset>
+		{% endif %}
+		<div id="card-section">
+			<label for="card-container" style="display:block;margin-bottom:.5rem">{{ _("Card details") }}</label>
+			<div id="card-container" role="group" aria-label="{{ _('Card details') }}"></div>
+		</div>
 		<p id="payment-status" role="status" aria-live="polite" style="min-height:1.5rem"></p>
 		<button id="pay-button" type="submit" class="btn btn-primary" disabled>{{ _("Pay") }} {{ amount }}</button>
 	</form>
@@ -20,32 +29,62 @@
 (async () => {
 	const statusEl = document.getElementById("payment-status");
 	const button = document.getElementById("pay-button");
+	const useGiftCard = document.getElementById("use-gift-card");
+	const giftContainer = document.getElementById("gift-card-container");
+	const cardSection = document.getElementById("card-section");
 	const say = (message) => { statusEl.textContent = message; };
-	let card;
+	let card, giftCard;
+	// With a gift card the card is asked for only when the gift card doesn't cover the whole amount.
+	let cardNeeded = true;
 	try {
 		const payments = window.Square.payments({{ application_id | tojson }}, {{ location_id | tojson }});
 		card = await payments.card();
 		await card.attach("#card-container");
+		if (useGiftCard) {
+			giftCard = await payments.giftCard();
+			await giftCard.attach("#gift-card-container");
+			useGiftCard.addEventListener("change", () => {
+				giftContainer.hidden = !useGiftCard.checked;
+				cardNeeded = !useGiftCard.checked;
+				cardSection.hidden = useGiftCard.checked;
+			});
+		}
 		button.disabled = false;
 	} catch (e) {
 		say({{ _("Card payments are unavailable right now. Please try again later.") | tojson }});
 		return;
 	}
+	const tokenize = async (method) => {
+		const result = await method.tokenize();
+		return result.status === "OK" ? result.token : null;
+	};
 	document.getElementById("square-payment-form").addEventListener("submit", async (event) => {
 		event.preventDefault();
 		button.disabled = true;
 		say({{ _("Processing…") | tojson }});
-		const result = await card.tokenize();
-		if (result.status !== "OK") {
+		const withGiftCard = Boolean(useGiftCard && useGiftCard.checked);
+		const giftToken = withGiftCard ? await tokenize(giftCard) : null;
+		const cardToken = cardNeeded ? await tokenize(card) : null;
+		if ((withGiftCard && !giftToken) || (cardNeeded && !cardToken)) {
 			say({{ _("Please check your card details and try again.") | tojson }});
 			button.disabled = false;
 			return;
 		}
 		frappe.call({
 			method: "payment_square.api.make_payment",
-			args: { payment_request: {{ payment_request | tojson }}, source_id: result.token },
+			args: { payment_request: {{ payment_request | tojson }}, source_id: cardToken, gift_card_source_id: giftToken },
 			freeze: true,
-			callback: (r) => { window.location.href = "/" + r.message.redirect_to.replace(/^\//, ""); },
+			callback: (r) => {
+				if (r.message.needs_card) {
+					cardNeeded = true;
+					cardSection.hidden = false;
+					say({{ _("Your gift card covers {0}. Enter a card for the remaining {1}; nothing has been charged yet.") | tojson }}
+						.replace("{0}", r.message.gift_card_amount).replace("{1}", r.message.remaining));
+					button.disabled = false;
+					return;
+				}
+				window.location.href = "/" + r.message.redirect_to.replace(/^\//, "");
+			},
 			error: () => { say({{ _("The payment could not be completed. You have not been charged.") | tojson }}); button.disabled = false; },
 		});
 	});
