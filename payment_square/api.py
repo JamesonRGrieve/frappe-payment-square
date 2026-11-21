@@ -176,3 +176,11 @@ def refund(payment_request, reason=""):
 		"status": results[0].get("status"),
 		"refunds": [{"id": r.get("id"), "status": r.get("status")} for r in results],
 	}
+
+
+@frappe.whitelist(methods=["POST"])
+def authorize_hold(request, source_id):
+	"""The hold page tokenised the buyer's card: authorise the hold request's own amount (never a client value)."""
+	from payment_square import holds
+
+	return holds.authorize(request, source_id, frappe.session.user)

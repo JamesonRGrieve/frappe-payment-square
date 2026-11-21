@@ -1,0 +1,34 @@
+{
+ "description": "An auction hold the card declines.",
+ "exchanges": [
+  {
+   "method": "POST",
+   "path": "/v2/payments",
+   "request": {
+    "source_id": "cnon:declined",
+    "idempotency_key": "<any>",
+    "amount_money": {
+     "amount": 5000,
+     "currency": "USD"
+    },
+    "location_id": "LTEST",
+    "reference_id": "bid-1",
+    "autocomplete": false,
+    "note": "Held for your bid on Booster box",
+    "buyer_email_address": "buyer@example.com",
+    "delay_action": "CANCEL",
+    "delay_duration": "P6D"
+   },
+   "response": {
+    "errors": [
+     {
+      "category": "PAYMENT_METHOD_ERROR",
+      "code": "CARD_DECLINED",
+      "detail": "Card declined."
+     }
+    ]
+   },
+   "status": 400
+  }
+ ]
+}

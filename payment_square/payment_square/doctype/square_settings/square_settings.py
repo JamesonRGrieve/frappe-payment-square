@@ -56,6 +56,25 @@ class SquareSettings(Document):
 			frappe.throw(_("Square gift cards aren't accepted here."))
 		return checkout.charge(self, payment_request, source_id, gift_card_source_id)
 
+	# frappe-auction's hold contract (Authorize at Bid); see payment_square.holds.
+	max_hold_days = square_client.HOLD_DAYS
+
+	def get_hold_url(self, **request):
+		from payment_square import holds
+
+		self.validate_transaction_currency(request["currency"])
+		return holds.start(self, **request)
+
+	def release_hold(self, hold_reference):
+		from payment_square import holds
+
+		holds.release(self, hold_reference)
+
+	def capture_hold(self, hold_reference, amount, currency):
+		from payment_square import holds
+
+		return holds.capture(self, hold_reference, amount, currency)
+
 	def refund(self, payment_id, amount, currency, reason=""):
 		body = square_client.refund_body(payment_id, amount, currency, reason)
 		return square_client.refund_payment(self.environment, self.get_password("access_token"), body)

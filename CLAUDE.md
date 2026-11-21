@@ -17,12 +17,28 @@ links and frappe-webshop checkout). Requires `payments` and `erpnext`.
 5. Webhook `payment.updated` + `COMPLETED`, with `reference_id` = PR name: settle if still payable and it is a whole card payment; a gift card or split part is logged for an accountant instead (never booked wrong or twice).
 6. Refund: each payment back to where it came from (gift card part to the gift card). Signature = base64(HMAC-SHA256(key, webhook_url + raw body)); `webhook_url` must match the Square subscription exactly.
 
+## Auction holds (frappe-auction's Authorize at Bid)
+
+`Square Settings` implements frappe-auction's hold contract (`max_hold_days`, `get_hold_url`, `release_hold`,
+`capture_hold`; see frappe-auction's `auction/holds.py`), so auctions can hold a bid on the buyer's card.
+
+1. `get_hold_url(**request)` records an Integration Request (service `Square Hold`) with the amount, currency,
+   payer, the document it is for and the callbacks, and returns `/square_hold?request=<IR>`.
+2. The page (payer only) tokenises the card; `api.authorize_hold` → `holds.authorize` creates the payment with
+   `autocomplete: false`, `delay_action: CANCEL`, `delay_duration: P6D` (Square's card-not-present ceiling is 7
+   days) for the **request's** amount. Approved → IR Authorized, `on_authorized(docname, payment_id)`; anything
+   else → IR Failed, the payment cancelled if one exists, `on_failed(docname, reason)`.
+3. `capture_hold`: GetPayment; lower the amount with UpdatePayment (PUT) when capturing less than approved; then
+   CompletePayment. More than approved is refused. `release_hold`: CancelPayment.
+
 ## Rules
 
 - No Square SDK dependency: `square_client.py` holds the request shapes and the two HTTP calls (30 s timeout).
 - Secrets live only in `Square Settings` Password fields, written by the pipeline from OpenBao.
 - **Nothing has run against the Square sandbox yet.** Never claim a live test.
-- Go-live gate: a sandbox round trip end to end before any store enables checkout: a card payment and refund; a gift card alone; a gift card short of the total (asked for a card, then split); a declined card after a gift card authorisation (released); a webshop order paid onto its Square order; refunds of a split.
+- `square_client.transport` has `requests.request`'s signature (GET/PUT for holds as well as POST).
+- Go-live gate: a sandbox round trip end to end before any store enables checkout (and, before any auction
+  uses Square holds, a hold approved, one captured for less, one cancelled, and one left to Square's auto-cancel): a card payment and refund; a gift card alone; a gift card short of the total (asked for a card, then split); a declined card after a gift card authorisation (released); a webshop order paid onto its Square order; refunds of a split.
 
 ## Testing
 

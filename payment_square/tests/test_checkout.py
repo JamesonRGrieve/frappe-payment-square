@@ -83,7 +83,7 @@ class TestCheckout(FrappeTestCase):
 		self.order_hook = checkout.square_order_id
 
 	def tearDown(self):
-		square_client.transport = square_client.requests.post
+		square_client.transport = square_client.requests.request
 		checkout.square_order_id = self.order_hook
 		frappe.db.rollback()
 

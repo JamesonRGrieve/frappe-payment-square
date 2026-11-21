@@ -1,0 +1,49 @@
+{
+ "description": "An auction hold: the card is authorised for 50.00, approved and not completed.",
+ "exchanges": [
+  {
+   "method": "POST",
+   "path": "/v2/payments",
+   "request": {
+    "source_id": "cnon:hold",
+    "idempotency_key": "<any>",
+    "amount_money": {
+     "amount": 5000,
+     "currency": "USD"
+    },
+    "location_id": "LTEST",
+    "reference_id": "bid-1",
+    "autocomplete": false,
+    "note": "Held for your bid on Booster box",
+    "buyer_email_address": "buyer@example.com",
+    "delay_action": "CANCEL",
+    "delay_duration": "P6D"
+   },
+   "response": {
+    "payment": {
+     "id": "HP1",
+     "created_at": "2026-10-20T10:00:00Z",
+     "updated_at": "2026-10-20T10:00:00Z",
+     "amount_money": {
+      "amount": 5000,
+      "currency": "USD"
+     },
+     "approved_money": {
+      "amount": 5000,
+      "currency": "USD"
+     },
+     "status": "APPROVED",
+     "source_type": "CARD",
+     "card_details": {
+      "status": "AUTHORIZED",
+      "card": {
+       "card_brand": "VISA",
+       "last_4": "0000"
+      }
+     },
+     "location_id": "LTEST"
+    }
+   }
+  }
+ ]
+}

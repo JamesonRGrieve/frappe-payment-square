@@ -214,3 +214,70 @@ write(
 		},
 	],
 )
+
+
+# frappe-auction holds (Authorize at Bid): authorise only, complete later for at most that, or cancel.
+def hold(source, amount, response, *, status=200):
+	request = create(source, amount, split=True)
+	request["reference_id"] = "bid-1"
+	request["note"] = "Held for your bid on Booster box"
+	request["delay_action"] = "CANCEL"
+	request["delay_duration"] = "P6D"
+	exchange = {"method": "POST", "path": "/v2/payments", "request": request, "response": response}
+	if status != 200:
+		exchange["status"] = status
+	return exchange
+
+
+def fetch(pid, amount):
+	return {
+		"method": "GET",
+		"path": f"/v2/payments/{pid}",
+		"request": None,
+		"response": {"payment": payment(pid, "APPROVED", amount)},
+	}
+
+
+write(
+	"hold_approved",
+	"An auction hold: the card is authorised for 50.00, approved and not completed.",
+	[hold("cnon:hold", 5000, {"payment": payment("HP1", "APPROVED", 5000)})],
+)
+write(
+	"hold_declined",
+	"An auction hold the card declines.",
+	[
+		hold(
+			"cnon:declined",
+			5000,
+			{
+				"errors": [
+					{"category": "PAYMENT_METHOD_ERROR", "code": "CARD_DECLINED", "detail": "Card declined."}
+				]
+			},
+			status=400,
+		)
+	],
+)
+lowered = payment("HP1", "APPROVED", 4100)
+lowered["approved_money"] = m(5000)
+write(
+	"hold_capture_less",
+	"The winner pays 41.00 of a 50.00 hold: the approved payment is lowered, then completed.",
+	[
+		fetch("HP1", 5000),
+		{
+			"method": "PUT",
+			"path": "/v2/payments/HP1",
+			"request": {"idempotency_key": ANY, "payment": {"amount_money": m(4100)}},
+			"response": {"payment": lowered},
+		},
+		complete("HP1", 4100),
+	],
+)
+write(
+	"hold_capture_full",
+	"The winner pays the whole hold: completed as it is.",
+	[fetch("HP1", 5000), complete("HP1", 5000)],
+)
+write("hold_release", "A losing bidder's hold is cancelled.", [cancel("HP1", 5000)])

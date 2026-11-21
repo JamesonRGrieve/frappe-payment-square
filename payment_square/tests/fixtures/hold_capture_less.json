@@ -1,0 +1,103 @@
+{
+ "description": "The winner pays 41.00 of a 50.00 hold: the approved payment is lowered, then completed.",
+ "exchanges": [
+  {
+   "method": "GET",
+   "path": "/v2/payments/HP1",
+   "request": null,
+   "response": {
+    "payment": {
+     "id": "HP1",
+     "created_at": "2026-10-20T10:00:00Z",
+     "updated_at": "2026-10-20T10:00:00Z",
+     "amount_money": {
+      "amount": 5000,
+      "currency": "USD"
+     },
+     "approved_money": {
+      "amount": 5000,
+      "currency": "USD"
+     },
+     "status": "APPROVED",
+     "source_type": "CARD",
+     "card_details": {
+      "status": "AUTHORIZED",
+      "card": {
+       "card_brand": "VISA",
+       "last_4": "0000"
+      }
+     },
+     "location_id": "LTEST"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/v2/payments/HP1",
+   "request": {
+    "idempotency_key": "<any>",
+    "payment": {
+     "amount_money": {
+      "amount": 4100,
+      "currency": "USD"
+     }
+    }
+   },
+   "response": {
+    "payment": {
+     "id": "HP1",
+     "created_at": "2026-10-20T10:00:00Z",
+     "updated_at": "2026-10-20T10:00:00Z",
+     "amount_money": {
+      "amount": 4100,
+      "currency": "USD"
+     },
+     "approved_money": {
+      "amount": 5000,
+      "currency": "USD"
+     },
+     "status": "APPROVED",
+     "source_type": "CARD",
+     "card_details": {
+      "status": "AUTHORIZED",
+      "card": {
+       "card_brand": "VISA",
+       "last_4": "0000"
+      }
+     },
+     "location_id": "LTEST"
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/v2/payments/HP1/complete",
+   "request": {},
+   "response": {
+    "payment": {
+     "id": "HP1",
+     "created_at": "2026-10-20T10:00:00Z",
+     "updated_at": "2026-10-20T10:00:00Z",
+     "amount_money": {
+      "amount": 4100,
+      "currency": "USD"
+     },
+     "approved_money": {
+      "amount": 4100,
+      "currency": "USD"
+     },
+     "status": "COMPLETED",
+     "source_type": "CARD",
+     "card_details": {
+      "status": "CAPTURED",
+      "card": {
+       "card_brand": "VISA",
+       "last_4": "0000"
+      }
+     },
+     "location_id": "LTEST"
+    }
+   }
+  }
+ ]
+}

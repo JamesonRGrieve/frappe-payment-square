@@ -21,6 +21,10 @@ REQUEST_TIMEOUT_SECONDS = 30
 IDEMPOTENCY_KEY_MAX = 45  # Square's limit
 REFERENCE_ID_MAX = 40
 NOTE_MAX = 500
+# An auction hold (frappe-auction's "Authorize at Bid"): a card payment approved but not completed, which
+# Square cancels by itself after HOLD_DAYS. Square's ceiling for card-not-present delayed capture is 7 days.
+HOLD_DAYS = 6
+HOLD_DELAY_DURATION = f"P{HOLD_DAYS}D"
 # ISO 4217 currencies without minor units (Square amounts are in the smallest unit).
 ZERO_DECIMAL_CURRENCIES = frozenset({"JPY", "KRW", "CLP", "ISK", "VND", "XAF", "XOF", "XPF"})
 
@@ -82,6 +86,25 @@ def payment_body(
 	return body
 
 
+def hold_body(source_id, amount, currency, location_id, reference_id, note="", buyer_email=None):
+	"""A CreatePayment body that only authorises: approved, completed later (``complete_payment``) for at most
+	the authorised amount, or cancelled; Square cancels it itself after HOLD_DAYS."""
+	body = payment_body(source_id, amount, currency, location_id, reference_id, note, buyer_email, split=True)
+	body["delay_action"] = "CANCEL"
+	body["delay_duration"] = HOLD_DELAY_DURATION
+	return body
+
+
+def update_amount_body(payment_id, amount, currency):
+	"""An UpdatePayment body lowering an approved payment's amount before it is completed."""
+	return {
+		"idempotency_key": idempotency_key("update", payment_id, amount),
+		"payment": {
+			"amount_money": {"amount": to_minor_units(amount, currency), "currency": currency.upper()}
+		},
+	}
+
+
 def refund_body(payment_id, amount, currency, reason=""):
 	body = {
 		"idempotency_key": idempotency_key("refund", payment_id, amount),
@@ -114,13 +137,14 @@ def is_valid_signature(signature_key, notification_url, raw_body, signature_head
 	return hmac.compare_digest(base64.b64encode(digest).decode(), signature_header)
 
 
-# The HTTP transport (``requests.post``'s signature). Tests replace it with a replay of recorded
+# The HTTP transport (``requests.request``'s signature). Tests replace it with a replay of recorded
 # exchanges validated against Square's OpenAPI document (tests/replay.py); nothing else may.
-transport = requests.post
+transport = requests.request
 
 
-def _post(environment, access_token, path, body):
+def _call(method, environment, access_token, path, body):
 	response = transport(
+		method,
 		BASE_URLS[environment] + path,
 		json=body,
 		headers={
@@ -136,8 +160,20 @@ def _post(environment, access_token, path, body):
 	return data
 
 
+def _post(environment, access_token, path, body):
+	return _call("POST", environment, access_token, path, body)
+
+
 def create_payment(environment, access_token, body):
 	return _post(environment, access_token, "/v2/payments", body)["payment"]
+
+
+def get_payment(environment, access_token, payment_id):
+	return _call("GET", environment, access_token, f"/v2/payments/{payment_id}", None)["payment"]
+
+
+def update_payment(environment, access_token, payment_id, body):
+	return _call("PUT", environment, access_token, f"/v2/payments/{payment_id}", body)["payment"]
 
 
 def complete_payment(environment, access_token, payment_id):

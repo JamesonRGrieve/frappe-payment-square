@@ -57,10 +57,10 @@ class Replay:
 	def of(cls, *fixture_names):
 		return cls(*(e for name in fixture_names for e in load(name)["exchanges"]))
 
-	def __call__(self, url, json=None, headers=None, timeout=None):
-		"""``requests.post``'s signature: every call this gateway makes is a JSON POST."""
+	def __call__(self, method, url, json=None, headers=None, timeout=None):
+		"""``requests.request``'s signature, as square_client calls it (JSON bodies, no query string)."""
 		assert timeout, "every Square call is bounded by a timeout"
-		method, params = "POST", None
+		params = None
 		path = "/" + url.split("/", 3)[3]
 		call = {"method": method, "path": path, "request": json, "params": params}
 		self.sent.append(call)

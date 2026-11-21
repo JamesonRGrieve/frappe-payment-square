@@ -1,0 +1,54 @@
+{#- SPDX-License-Identifier: AGPL-3.0-or-later -#}
+{% extends "templates/web.html" %}
+
+{% block page_content %}
+<div class="square-hold">
+	<h1 class="h3">{{ title }}</h1>
+	{% if description %}<p>{{ description }}</p>{% endif %}
+	{% if waiting %}
+	<p>{{ _("{0} is held on your card, not charged.").format(amount) }}</p>
+	<div id="square-card" class="mb-3"></div>
+	<button class="btn btn-primary square-hold-button" type="button">{{ _("Authorise") }}</button>
+	<p class="square-hold-error text-danger mt-3" role="alert"></p>
+	{% else %}
+	<p>{{ _("This hold has already been handled.") }} <a href="{{ return_url | e }}">{{ _("Back") }}</a></p>
+	{% endif %}
+</div>
+{% endblock %}
+
+{% block script %}
+{% if waiting %}
+<script src="{{ sdk_url | e }}"></script>
+<script>
+	(async () => {
+		const payments = Square.payments({{ application_id | tojson }}, {{ location_id | tojson }});
+		const card = await payments.card();
+		await card.attach("#square-card");
+		const button = document.querySelector(".square-hold-button");
+		const error = document.querySelector(".square-hold-error");
+		button.addEventListener("click", async () => {
+			button.disabled = true;
+			const result = await card.tokenize();
+			if (result.status !== "OK") {
+				error.textContent = (result.errors || []).map((e) => e.message).join(" ");
+				button.disabled = false;
+				return;
+			}
+			frappe
+				.call({
+					method: "payment_square.api.authorize_hold",
+					args: { request: {{ request | tojson }}, source_id: result.token },
+					type: "POST",
+				})
+				.then((r) => {
+					if (r.message.ok) window.location.assign(r.message.return_url);
+					else {
+						error.textContent = r.message.error;
+						button.disabled = false;
+					}
+				});
+		});
+	})();
+</script>
+{% endif %}
+{% endblock %}
